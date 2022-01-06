@@ -6,6 +6,8 @@ export default function SignUp(props) {
   const [user, setUser] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
+    successMessage: null,
   });
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -87,9 +89,9 @@ export default function SignUp(props) {
           <input
             type="password"
             className="form-control"
-            id="password"
+            id="confirmPassword"
             placeholder="Password"
-            value={user.password}
+            value={user.confirmPassword}
             onChange={handleChange}
           />
         </div>
