@@ -136,7 +136,7 @@ Should see the react logo in browser if successful
 import React from "react";
 function Header() {
   return (
-    <nav class="navbar navbar-dark bg-primary">
+    <nav className="navbar navbar-dark bg-primary">
       <div className="row col-12 d-flex justify-content-center text-white">
         <span className="h3">Sign Up</span>
       </div>
@@ -284,14 +284,14 @@ export default function SignUp(props) {
 <details>
 <summary>Details </summary>
 
-1. We check if password matches confirm password
-2. Make the call `sendDetailsToServer` function (Not defined yet). This will make our backend api request.
+- We check if password matches confirm password
+- Make the call `sendDetailsToServer()` (Not defined yet). This will make our backend api request.
 </details>
 
 ```js
 const handleSubmitClick = (e) => {
   e.preventDefault();
-  if (state.password === state.confirmPassword) {
+  if (user.password === user.confirmPassword) {
     sendDetailsToServer();
   } else {
     props.showError("Passwords do not match");
@@ -339,7 +339,7 @@ export default function SignUp(props) {
         password: user.password,
       };
       axios
-        .post(API_BASE_URL + "/user/register", payload)
+        .post(API_BASE_URL + "signup", payload)
         .then(function (response) {
           if (response.status === 200) {
             setUser((prevState) => ({
@@ -469,4 +469,46 @@ export default Alert;
   min-width: 200px;
   justify-content: space-between;
 }
+```
+
+Now that we have a sign up page, we need to be able to show a new user their home page after logging in. To protect that users info we can use session tokens.
+
+17. Update sendDetailsToServer function in `SignUp.js` and add import from constants
+
+```js
+import { API_BASE_URL, ACCESS_TOKEN_NAME } from "../../constants/apiConstants";
+
+...
+
+  const sendDetailsToServer = () => {
+    if (user.email.length && user.password.length) {
+      props.showError(null);
+      const payload = {
+        username: user.username,
+        email: user.email,
+        password: user.password,
+      };
+      axios
+        .post(API_BASE_URL + "signup", payload)
+        .then(function (response) {
+          if (response.status === 200) {
+            setUser((prevState) => ({
+              ...prevState,
+              successMessage:
+                "Registration successful. Redirecting to home page..",
+            }));
+            localStorage.setItem(ACCESS_TOKEN_NAME, response.data.token);
+            redirectToHome();
+            props.showError(null);
+          } else {
+            props.showError("Some error ocurred");
+          }
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    } else {
+      props.showError("Please enter valid username and password");
+    }
+  };
 ```

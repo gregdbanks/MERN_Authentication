@@ -13,11 +13,23 @@ const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000"); // update to match the domain you will make the request from
+  res.header(
+    "Access-Control-Allow-Headers",
+    "token, Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
+
+// Middleware
+app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
   res.json({ message: "API Working" });
 });
-
 
 /**
  * Router Middleware

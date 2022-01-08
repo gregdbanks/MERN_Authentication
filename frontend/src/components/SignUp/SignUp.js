@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { API_BASE_URL } from "../../constants/apiConstants";
+// import "./Registration.css";
+import { API_BASE_URL, ACCESS_TOKEN_NAME } from "../../constants/apiConstants";
+import { withRouter } from "react-router-dom";
 
-export default function SignUp(props) {
+function SignUp(props) {
   const [user, setUser] = useState({
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
     successMessage: null,
   });
+
   const handleChange = (e) => {
     const { id, value } = e.target;
     setUser((prevState) => ({
@@ -16,15 +20,17 @@ export default function SignUp(props) {
       [id]: value,
     }));
   };
+
   const sendDetailsToServer = () => {
     if (user.email.length && user.password.length) {
       props.showError(null);
       const payload = {
+        username: user.username,
         email: user.email,
         password: user.password,
       };
       axios
-        .post(API_BASE_URL + "/user/register", payload)
+        .post(API_BASE_URL + "signup", payload)
         .then(function (response) {
           if (response.status === 200) {
             setUser((prevState) => ({
@@ -32,6 +38,7 @@ export default function SignUp(props) {
               successMessage:
                 "Registration successful. Redirecting to home page..",
             }));
+            localStorage.setItem(ACCESS_TOKEN_NAME, response.data.token);
             redirectToHome();
             props.showError(null);
           } else {
@@ -45,10 +52,12 @@ export default function SignUp(props) {
       props.showError("Please enter valid username and password");
     }
   };
+
   const redirectToHome = () => {
     props.updateTitle("Home");
     props.history.push("/home");
   };
+
   const handleSubmitClick = (e) => {
     e.preventDefault();
     if (user.password === user.confirmPassword) {
@@ -57,9 +66,22 @@ export default function SignUp(props) {
       props.showError("Passwords do not match");
     }
   };
+
   return (
     <div className="card col-12 col-lg-4 login-card mt-2 hv-center">
       <form>
+        <div className="form-group text-left">
+          <label htmlFor="exampleInputUsername">Username</label>
+          <input
+            type="text"
+            className="form-control"
+            id="username"
+            aria-describedby="usernameHelp"
+            placeholder="Enter username"
+            value={user.username}
+            onChange={handleChange}
+          />
+        </div>
         <div className="form-group text-left">
           <label htmlFor="exampleInputEmail1">Email address</label>
           <input
@@ -82,6 +104,8 @@ export default function SignUp(props) {
             className="form-control"
             id="password"
             placeholder="Password"
+            value={user.password}
+            onChange={handleChange}
           />
         </div>
         <div className="form-group text-left">
@@ -106,3 +130,5 @@ export default function SignUp(props) {
     </div>
   );
 }
+
+export default withRouter(SignUp);
