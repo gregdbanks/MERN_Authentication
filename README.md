@@ -808,3 +808,10 @@ export default withRouter(Header);
 ```
 
 The title is determined by which page, and the logout button only shows if you are on the home page.
+
+Now you should have something fully functional, to test:
+
+- user should be able to signup
+- user should be able to login and see private home page.
+
+# This wraps up the second part of this course and now you know how to use react with private routes and authentication on the client side.
