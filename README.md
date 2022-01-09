@@ -377,22 +377,30 @@ npm i react-router-dom@5.2.0
 - Add routing to `App.js` like code below
 
 ```js
-import React from "react";
-import Header from "./components/Header";
+import React, { useState } from "react";
+import "./App.css";
+import Header from "./components/Header/Header";
 import SignUp from "./components/SignUp/SignUp";
+import Alert from "./components/Alert/Alert";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
 function App() {
+  const [title, updateTitle] = useState(null);
+  const [errorMessage, updateErrorMessage] = useState(null);
   return (
     <Router>
       <div className="App">
-        <Header />
+        <Header title={title} />
         <div className="container d-flex align-items-center flex-column">
           <Switch>
             <Route path="/" exact={true}>
-              <SignUp />
+              <SignUp
+                showError={updateErrorMessage}
+                updateTitle={updateTitle}
+              />
             </Route>
           </Switch>
+          <Alert errorMessage={errorMessage} hideError={updateErrorMessage} />
         </div>
       </div>
     </Router>
@@ -476,6 +484,7 @@ Now that we have a sign up page, we need to be able to show a new user their hom
 17. Update sendDetailsToServer function in `SignUp.js` and add import from constants
 
 ```js
+...
 import { API_BASE_URL, ACCESS_TOKEN_NAME } from "../../constants/apiConstants";
 
 ...
@@ -512,3 +521,290 @@ import { API_BASE_URL, ACCESS_TOKEN_NAME } from "../../constants/apiConstants";
     }
   };
 ```
+
+We use `localStorage.setItem` to store the token received from backend API to browser’s local storage.
+
+18. Create `utils` folder at root of src, name it `PrivateRoute.js`, add code
+
+```js
+import React from "react";
+import { Redirect, Route } from "react-router-dom";
+import { ACCESS_TOKEN_NAME } from "../constants/apiConstants";
+
+function PrivateRoute({ children, ...rest }) {
+  return (
+    <Route
+      {...rest}
+      render={({ location }) =>
+        localStorage.getItem(ACCESS_TOKEN_NAME) ? (
+          children
+        ) : (
+          <Redirect
+            to={{
+              pathname: "/login",
+              state: { from: location },
+            }}
+          />
+        )
+      }
+    />
+  );
+}
+
+export default PrivateRoute;
+```
+
+Here we make a generic Route checking for our token which we will use later for our `Home` route.
+
+19. Create `Login` component folder, then `Login.js` file.
+
+```js
+import React, { useState } from "react";
+import axios from "axios";
+import "./Login.css";
+import { API_BASE_URL, ACCESS_TOKEN_NAME } from "../../constants/apiConstants";
+import { withRouter } from "react-router-dom";
+
+function Login(props) {
+  const [state, setState] = useState({
+    email: "",
+    password: "",
+    successMessage: null,
+  });
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setState((prevState) => ({
+      ...prevState,
+      [id]: value,
+    }));
+  };
+
+  const handleSubmitClick = (e) => {
+    e.preventDefault();
+    const payload = {
+      email: state.email,
+      password: state.password,
+    };
+    axios
+      .post(API_BASE_URL + "login", payload)
+      .then(function (response) {
+        if (response.status === 200) {
+          setState((prevState) => ({
+            ...prevState,
+            successMessage: "Login successful. Redirecting to home page..",
+          }));
+          localStorage.setItem(ACCESS_TOKEN_NAME, response.data.token);
+          redirectToHome();
+          props.showError(null);
+        } else if (response.status === 204) {
+          props.showError("Username and password do not match");
+        } else {
+          props.showError("Username does not exists");
+        }
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+  const redirectToHome = () => {
+    props.updateTitle("Home");
+    props.history.push("/home");
+  };
+  const redirectToRegister = () => {
+    props.history.push("/register");
+    props.updateTitle("Register");
+  };
+  return (
+    <div className="card col-12 col-lg-4 login-card mt-2 hv-center">
+      <form>
+        <div className="form-group text-left">
+          <label htmlFor="exampleInputEmail1">Email address</label>
+          <input
+            type="email"
+            className="form-control"
+            id="email"
+            aria-describedby="emailHelp"
+            placeholder="Enter email"
+            value={state.email}
+            onChange={handleChange}
+          />
+          <small id="emailHelp" className="form-text text-muted">
+            We'll never share your email with anyone else.
+          </small>
+        </div>
+        <div className="form-group text-left">
+          <label htmlFor="exampleInputPassword1">Password</label>
+          <input
+            type="password"
+            className="form-control"
+            id="password"
+            placeholder="Password"
+            value={state.password}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="form-check"></div>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          onClick={handleSubmitClick}
+        >
+          Submit
+        </button>
+      </form>
+      <div
+        className="alert alert-success mt-2"
+        style={{ display: state.successMessage ? "block" : "none" }}
+        role="alert"
+      >
+        {state.successMessage}
+      </div>
+      <div className="registerMessage">
+        <span>Dont have an account? </span>
+        <span className="loginText" onClick={() => redirectToRegister()}>
+          Register
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export default withRouter(Login);
+```
+
+20. Create `Home` component folder, then `Home.js` file.
+
+```js
+import React, { useEffect } from "react";
+import { withRouter } from "react-router-dom";
+import axios from "axios";
+
+import { ACCESS_TOKEN_NAME, API_BASE_URL } from "../../constants/apiConstants";
+
+function Home(props) {
+  useEffect(() => {
+    axios
+      .get(API_BASE_URL + "me", {
+        headers: { token: localStorage.getItem(ACCESS_TOKEN_NAME) },
+      })
+      .then(function (response) {
+        if (response.status !== 200) {
+          redirectToLogin();
+        }
+      })
+      .catch(function (error) {
+        redirectToLogin();
+      });
+  });
+  function redirectToLogin() {
+    props.history.push("/login");
+  }
+  return <div className="mt-2">Home page only user should see.</div>;
+}
+
+export default withRouter(Home);
+```
+
+Notice our useEffect function checks to make sure our token is NOT expired by sending it in the headers to our API.
+
+21. Now lets update our `App.js` file to include our home and login component routes.
+
+```js
+import React, { useState } from "react";
+import "./App.css";
+
+import PrivateRoute from "./utils/PrivateRoute";
+import Header from "./components/Header/Header";
+import Login from "./components/Login/Login";
+import SignUp from "./components/SignUp/SignUp";
+import Home from "./components/Home/Home";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import Alert from "./components/Alert/Alert";
+
+function App() {
+  const [title, updateTitle] = useState(null);
+  const [errorMessage, updateErrorMessage] = useState(null);
+  return (
+    <Router>
+      <div className="App">
+        <Header title={title} />
+        <div className="container d-flex align-items-center flex-column">
+          <Switch>
+            <Route path="/" exact={true}>
+              <SignUp
+                showError={updateErrorMessage}
+                updateTitle={updateTitle}
+              />
+            </Route>
+            <Route path="/signup">
+              <SignUp
+                showError={updateErrorMessage}
+                updateTitle={updateTitle}
+              />
+            </Route>
+            <Route path="/login">
+              <Login showError={updateErrorMessage} updateTitle={updateTitle} />
+            </Route>
+            <PrivateRoute path="/home">
+              <Home />
+            </PrivateRoute>
+          </Switch>
+          <Alert errorMessage={errorMessage} hideError={updateErrorMessage} />
+        </div>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+```
+
+Notice our `Home` component is wrapped in our `PrivateRoute` requiring our user has a validated token.
+
+22. Update `Header` component to include dynamic title, and Logout button.
+
+```js
+import React from "react";
+import { withRouter } from "react-router-dom";
+
+import { ACCESS_TOKEN_NAME } from "../../constants/apiConstants";
+
+function Header(props) {
+  const capitalize = (s) => {
+    if (typeof s !== "string") return "";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+  let title = capitalize(
+    props.location.pathname.substring(1, props.location.pathname.length)
+  );
+  if (props.location.pathname === "/") {
+    title = "Welcome";
+  }
+  function renderLogout() {
+    if (props.location.pathname === "/home") {
+      return (
+        <div className="ml-auto">
+          <button className="btn btn-danger" onClick={() => handleLogout()}>
+            Logout
+          </button>
+        </div>
+      );
+    }
+  }
+  function handleLogout() {
+    localStorage.removeItem(ACCESS_TOKEN_NAME);
+    props.history.push("/login");
+  }
+  return (
+    <nav className="navbar navbar-dark bg-primary">
+      <div className="row col-12 d-flex justify-content-center text-white">
+        <span className="h3">{props.title || title}</span>
+        {renderLogout()}
+      </div>
+    </nav>
+  );
+}
+export default withRouter(Header);
+```
+
+The title is determined by which page, and the logout button only shows if you are on the home page.
