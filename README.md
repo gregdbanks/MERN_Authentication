@@ -1,71 +1,3 @@
-<!-- # Node_MVP :smiley:
-Guide for making authentication API utilizing json web tokens
-
-# What is JWT and why is it useful?
-
-JWT is useful for Authorization and Information exchange. Can be sent via URL/ Post request/HTTP Header which makes it fast for transmission and usable. It contains the details of user (not session id in cookies like traditional request) so , :drum: :drum: :drum: , NO need to query database to get user details.
-
-
-# What to Know?
-You should know the basics of javascript and node, so this guide assumes both.
-
-We will be using MongoDB Atlas Cloud Database to store our users. [For more info...](https://docs.atlas.mongodb.com/)
-
-<details>
-<summary>Instructions for MongoDB Atlas </summary>
-
-1. Visit [Official Docs](https://docs.atlas.mongodb.com/) , After signing up, click on `+ New Project`
-2. Name your project
-3. Click `Create Project`
-4. Click `Build a Database`
-5. Select FREE tier and click `Create`
-6. Choose a cloud provider, I chose AWS, but any will do
-7. Choose a region, any
-8. Scroll to the bottom and click `Create Cluster` (could take several minutes)
-9. Create a User, entering in a username and password and then clicking `Create User`
-10. Select where you would like to connect from, select local, and then click `Add My Current Ip Address`
-11. Click `Finish and Close` at the bottom of page
-12. In Database Deployments Click the `Connect` button next to your cluster name
-13. Click `Connect your application`, here is where you can get your connection string. :smile:
-
-
-</details>
-
----
-
-<details>
-<summary>What NPM packages will we be using?</summary>
-
-> [express](http://expressjs.com/)
-
-Express is a minimal and flexible Node.js web application framework that provides a robust set of features for web and mobile applications
-
-> [express-validator](https://express-validator.github.io/docs/)
-
-To Validate the body data on the server in the express framework, we will be using this library. It's a server-side data validation library. So, even if a malicious user bypasses the client-side verification, the server-side data validation will catch it and throw an error.
-
-> [bcryptjs](https://www.npmjs.com/package/bcrypt)
-
-This library will be used to hash the password and then store it to database.This way even app administrators can't access the account of a user.
-
-> [JWT](https://jwt.io/)
-
-JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact and self-contained way for securely transmitting information between parties as a JSON object. This information can be verified and trusted because it is digitally signed. JWTs can be signed using a secret (with the HMAC algorithm) or a public/private key pair using RSA or ECDSA. You can specify how much time that token will last as well.
-
-> [mongoose](https://mongoosejs.com/docs/)
-
-Mongoose is an Object Data Modeling (ODM) library for MongoDB and Node.js. It manages relationships between data, provides schema validation, and is used to translate between objects in code and the representation of those objects in MongoDB.
-
-> [body-parser](https://www.npmjs.com/package/body-parser)
-
-A Node middleware for parsing request.body data (JSON).
-
-> [dotenv](https://www.npmjs.com/package/dotenv)
-
-Dotenv is a zero-dependency module that loads environment variables from a .env file into process.env. Storing configuration in the environment separate from code is based on The Twelve-Factor App methodology.
-
-</details> -->
-
 # Adding frontend to our node app via React
 
 We will be using [Create React App](https://github.com/facebook/create-react-app) for initiating our project. This Frontend react app will live at the root of your node app. Look below for file structure.
@@ -80,7 +12,7 @@ npm start
 
 Should see the react logo in browser if successful
 
-2. We are going to use bootstrap 4 in our project for ease, for more info [Click here](https://getbootstrap.com/docs/4.0/getting-started/introduction/). Replace index.html with code below.
+2. We are going to use bootstrap 4 in our project for ease, for more info [Click here](https://getbootstrap.com/docs/4.0/getting-started/introduction/). In your `public` folder replace `index.html` with code below.
 
 ```html
 <!DOCTYPE html>
@@ -128,7 +60,7 @@ Should see the react logo in browser if successful
 
 3. Create `components` folder within the `src` folder
 
-4. Create `Header` folder, inside create a `Header.js`
+4. Create `Header` folder inside `components`, inside create a `Header.js`
 
 5. Using bootstrap's navbar, Add code below to `Header.js`
 
@@ -151,6 +83,7 @@ export default Header;
 ```js
 import React from "react";
 import Header from "./components/Header/Header";
+
 function App() {
   return (
     <div className="App">
@@ -158,63 +91,15 @@ function App() {
     </div>
   );
 }
+
+export default App;
 ```
 
 Now go look in browser, expect to see header.
 
-7. Create `SignUp` folder in `components` adding code below.
-
-```js
-import React, { useState } from "react";
-function SignUp(props) {
-  return (
-    <div className="card col-12 col-lg-4 login-card mt-2 hv-center">
-      <form>
-        <div className="form-group text-left">
-          <label htmlFor="exampleInputEmail1">Email address</label>
-          <input
-            type="email"
-            className="form-control"
-            id="email"
-            aria-describedby="emailHelp"
-            placeholder="Enter email"
-          />
-          <small id="emailHelp" className="form-text text-muted">
-            We'll never share your email with anyone else.
-          </small>
-        </div>
-        <div className="form-group text-left">
-          <label htmlFor="exampleInputPassword1">Password</label>
-          <input
-            type="password"
-            className="form-control"
-            id="password"
-            placeholder="Password"
-          />
-        </div>
-        <div className="form-group text-left">
-          <label htmlFor="exampleInputPassword1">Confirm Password</label>
-          <input
-            type="password"
-            className="form-control"
-            id="confirmPassword"
-            placeholder="Confirm Password"
-          />
-        </div>
-        <button type="submit" className="btn btn-primary">
-          Sign Up
-        </button>
-      </form>
-    </div>
-  );
-}
-```
-
-This will add our required inputs.
-
 We will be using react's useState hook, Assuming you have basic knowledge of react hooks, for more info [Click here](https://reactjs.org/docs/hooks-intro.html).
 
-8. Update `SignUp.js` with code below.
+7. Create `SignUp` folder, inside create `SignUp.js`
 
 ```js
 import React, { useState } from "react";
@@ -232,9 +117,29 @@ export default function SignUp(props) {
       [id]: value,
     }));
   };
+  const handleSubmitClick = (e) => {
+    e.preventDefault();
+    if (user.password === user.confirmPassword) {
+      sendDetailsToServer();
+    } else {
+      props.showError("Passwords do not match");
+    }
+  };
   return (
     <div className="card col-12 col-lg-4 login-card mt-2 hv-center">
       <form>
+        <div className="form-group text-left">
+          <label htmlFor="exampleInputUsername">Username</label>
+          <input
+            type="text"
+            className="form-control"
+            id="username"
+            aria-describedby="usernameHelp"
+            placeholder="Enter username"
+            value={user.username}
+            onChange={handleChange}
+          />
+        </div>
         <div className="form-group text-left">
           <label htmlFor="exampleInputEmail1">Email address</label>
           <input
@@ -257,6 +162,8 @@ export default function SignUp(props) {
             className="form-control"
             id="password"
             placeholder="Password"
+            value={user.password}
+            onChange={handleChange}
           />
         </div>
         <div className="form-group text-left">
@@ -264,13 +171,17 @@ export default function SignUp(props) {
           <input
             type="password"
             className="form-control"
-            id="password"
+            id="confirmPassword"
             placeholder="Password"
-            value={user.password}
+            value={user.confirmPassword}
             onChange={handleChange}
           />
         </div>
-        <button type="submit" className="btn btn-primary">
+        <button
+          type="submit"
+          className="btn btn-primary"
+          onClick={handleSubmitClick}
+        >
           Sign Up
         </button>
       </form>
@@ -279,50 +190,22 @@ export default function SignUp(props) {
 }
 ```
 
-9. Add click event handler below anywhere above return statement.
-
-<details>
-<summary>Details </summary>
-
-- We check if password matches confirm password
-- Make the call `sendDetailsToServer()` (Not defined yet). This will make our backend api request.
-</details>
-
-```js
-const handleSubmitClick = (e) => {
-  e.preventDefault();
-  if (user.password === user.confirmPassword) {
-    sendDetailsToServer();
-  } else {
-    props.showError("Passwords do not match");
-  }
-};
-```
-
-10. Add to button our handler like below
-
-```js
-<button type="submit" className="btn btn-primary" onClick={handleSubmitClick}>
-  Sign Up
-</button>
-```
-
 We will be using `axios`, an npm module for async request. Click [here](https://www.npmjs.com/package/axios) for more info.
 
-11. Run command below in terminal inside 'frontEnd' folder/dir.
+8. Run command below in terminal inside 'frontEnd' folder/dir.
 
 ```
 npm i --save axios
 ```
 
-12. Create constants folder at frontEnd `src` dir, Add apiConstants file adding code below
+9. Create `constants` folder at frontEnd `src` dir, Add `apiConstants.js` file adding code below
 
 ```js
 export const API_BASE_URL = "http://localhost:4000/user/";
 export const ACCESS_TOKEN_NAME = "login_access_token";
 ```
 
-12. Add functions and imports below to Sign Up form
+10. Add functions and imports below to `SignUp.js`
 
 ```js
 import React, { useState } from "react";
@@ -335,6 +218,7 @@ export default function SignUp(props) {
     if (user.email.length && user.password.length) {
       props.showError(null);
       const payload = {
+        username: user.username,
         email: user.email,
         password: user.password,
       };
@@ -368,13 +252,15 @@ export default function SignUp(props) {
 }
 ```
 
-13. Setup Client side routing by installing react-router-dom
+11. Setup Client side routing by installing `react-router-dom`
+
+For more info on Client side routing here is a good [article](https://alexmercedcoder.medium.com/understanding-client-side-routing-react-router-101-4a12a156a0cd) explaining it.
 
 ```
 npm i react-router-dom@5.2.0
 ```
 
-- Add routing to `App.js` like code below
+Add routing to `App.js` like code below
 
 ```js
 import React, { useState } from "react";
@@ -410,17 +296,17 @@ function App() {
 export default App;
 ```
 
-14. run npm start command, then we should see the sign up form in the home page route.
-
-15. Make `Alert` folder in components folder, adding `Alert.js` and `Alert.css`
+12. Make `Alert` folder in components folder, adding `Alert.js` and `Alert.css`
 
 ```js
 // Alert.js
 
 import React, { useState, useEffect } from "react";
 import "./Alert.css";
+
 function Alert(props) {
   const [modalDisplay, toggleDisplay] = useState("none");
+
   const openModal = () => {
     toggleDisplay("block");
   };
@@ -461,15 +347,11 @@ function Alert(props) {
 export default Alert;
 ```
 
-<details>
-<summary>Code Details</summary>
-
-- Notice we pass props as an argument, this will come from the parent Component using this Alert component
-- We also use Reacts [useEffect](https://reactjs.org/docs/hooks-effect.html) hook which will wait for props to change from parent
+Notice we pass props as an argument, this will come from the parent Component using this Alert component and we also use Reacts [useEffect](https://reactjs.org/docs/hooks-effect.html) hook which will wait for props to change from parent
 
 </details>
 
-16. Add code below to `Alert.css`
+13. Add code below to `Alert.css`
 
 ```css
 /* ALert.css */
@@ -481,7 +363,7 @@ export default Alert;
 
 Now that we have a sign up page, we need to be able to show a new user their home page after logging in. To protect that users info we can use session tokens.
 
-17. Update sendDetailsToServer function in `SignUp.js` and add import from constants
+14. Update sendDetailsToServer function in `SignUp.js` and add import from constants
 
 ```js
 ...
@@ -524,7 +406,7 @@ import { API_BASE_URL, ACCESS_TOKEN_NAME } from "../../constants/apiConstants";
 
 We use `localStorage.setItem` to store the token received from backend API to browser’s local storage.
 
-18. Create `utils` folder at root of src, name it `PrivateRoute.js`, add code
+15. Create `utils` folder at root of src, name it `PrivateRoute.js`, add code
 
 ```js
 import React from "react";
@@ -556,7 +438,7 @@ export default PrivateRoute;
 
 Here we make a generic Route checking for our token which we will use later for our `Home` route.
 
-19. Create `Login` component folder, then `Login.js` file.
+16. Create `Login` component folder, then `Login.js` file.
 
 ```js
 import React, { useState } from "react";
@@ -672,7 +554,7 @@ function Login(props) {
 export default withRouter(Login);
 ```
 
-20. Create `Home` component folder, then `Home.js` file.
+17. Create `Home` component folder, then `Home.js` file.
 
 ```js
 import React, { useEffect } from "react";
@@ -707,7 +589,7 @@ export default withRouter(Home);
 
 Notice our useEffect function checks to make sure our token is NOT expired by sending it in the headers to our API.
 
-21. Now lets update our `App.js` file to include our home and login component routes.
+18. Now lets update our `App.js` file to include our home and login component routes.
 
 ```js
 import React, { useState } from "react";
@@ -761,7 +643,7 @@ export default App;
 
 Notice our `Home` component is wrapped in our `PrivateRoute` requiring our user has a validated token.
 
-22. Update `Header` component to include dynamic title, and Logout button.
+19. Update `Header` component to include dynamic title, and Logout button.
 
 ```js
 import React from "react";
