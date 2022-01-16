@@ -1,11 +1,13 @@
 const { validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const ErrorClass = require("../utils/errorClass");
 
 const User = require("../model/User");
 
-exports.signUp = async (req, res) => {
+exports.signUp = async (req, res, next) => {
   const errors = validationResult(req);
+
   if (!errors.isEmpty()) {
     return res.status(400).json({
       errors: errors.array(),
@@ -17,10 +19,9 @@ exports.signUp = async (req, res) => {
     let user = await User.findOne({
       email,
     });
+
     if (user) {
-      return res.status(400).json({
-        msg: "User Already Exists",
-      });
+      return new ErrorClass(`User Already Exist`, 400);
     }
 
     user = new User({
@@ -54,12 +55,11 @@ exports.signUp = async (req, res) => {
       }
     );
   } catch (err) {
-    console.log(err.message);
-    res.status(500).send("Error in Saving");
+    next(err);
   }
 };
 
-exports.loginUser = async (req, res) => {
+exports.loginUser = async (req, res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -73,16 +73,10 @@ exports.loginUser = async (req, res) => {
     let user = await User.findOne({
       email,
     });
-    if (!user)
-      return res.status(400).json({
-        message: "User Not Exist",
-      });
+    if (!user) return new ErrorClass(`User Does Not Exist`, 400);
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({
-        message: "Incorrect Password !",
-      });
+    if (!isMatch) return new ErrorClass(`Incorrect Password`, 400);
 
     const payload = {
       user: {
@@ -104,19 +98,16 @@ exports.loginUser = async (req, res) => {
       }
     );
   } catch (e) {
-    console.error(e);
-    res.status(500).json({
-      message: "Server Error",
-    });
+    next(err);
   }
 };
 
-exports.getMe = async (req, res) => {
+exports.getMe = async (req, res, next) => {
   try {
     // request.user is getting fetched from Middleware after token authentication
     const user = await User.findById(req.user.id);
     res.json(user);
   } catch (e) {
-    res.send({ message: "Error in Fetching user" });
+    next(err);
   }
 };
